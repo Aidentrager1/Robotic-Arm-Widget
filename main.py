@@ -31,7 +31,21 @@ import RPi.GPIO as GPIO
 from pidev.stepper import stepper
 from pidev.Cyprus_Commands import Cyprus_Commands_RPi as cyprus
 
+import spidev
+import os
+from time import sleep
+import RPi.GPIO as GPIO
+from pidev.stepper import stepper
+from Slush.Devices import L6470Registers
+from pidev.Cyprus_Commands import Cyprus_Commands_RPi as cyprus
+spi = spidev.SpiDev()
 
+cyprus.initialize()
+cyprus.setup_servo(2)
+cyprus.set_servo_position(2, 0.5)
+
+s0 = stepper(port=0, micro_steps=32, hold_current=20, run_current=20, accel_current=20, deaccel_current=20,
+             steps_per_unit=200, speed=2)
 # ////////////////////////////////////////////////////////////////
 # //                      GLOBAL VARIABLES                      //
 # //                         CONSTANTS                          //
@@ -84,7 +98,8 @@ class MainScreen(Screen):
     version = cyprus.read_firmware_version()
     armPosition = 0
     lastClick = time.clock()
-
+    ON = True
+    Position = "up"
     def __init__(self, **kwargs):
         super(MainScreen, self).__init__(**kwargs)
         self.initialize()
@@ -99,15 +114,30 @@ class MainScreen(Screen):
 
     def toggleArm(self):
         print("Process arm movement here")
-
+        if self.Position == "up":
+            cyprus.set_pwm_values(1, period_value=100000, compare_value=100000, compare_mode=cyprus.LESS_THAN_OR_EQUAL)
+            self.Position = "down"
+        else:
+            cyprus.set_pwm_values(1, period_value=100000, compare_value=0, compare_mode=cyprus.LESS_THAN_OR_EQUAL)
+            self.Position = "up"
     def toggleMagnet(self):
         print("Process magnet here")
-        
+        if self.ON:
+            cyprus.set_servo_position(2, 0)
+            self.ON = False
+        else:
+            cyprus.set_servo_position(2, 0.5)
+            self.ON = True
+
     def auto(self):
         print("Run the arm automatically here")
 
     def setArmPosition(self, position):
         print("Move arm here")
+        while s0.isBusy():
+            sleep(0.01)
+        s0.go_to_position(position/25)
+        self.armControlLabel.text = "Arm Position: " + str(position)
 
     def homeArm(self):
         arm.home(self.homeDirection)

@@ -5,6 +5,7 @@
 import math
 import sys
 import time
+from threading import Thread
 
 from kivy.app import App
 from kivy.lang import Builder
@@ -100,6 +101,7 @@ class MainScreen(Screen):
     lastClick = time.clock()
     ON = True
     Position = "up"
+    run = True
     def __init__(self, **kwargs):
         super(MainScreen, self).__init__(**kwargs)
         self.initialize()
@@ -128,16 +130,72 @@ class MainScreen(Screen):
         else:
             cyprus.set_servo_position(2, 0.5)
             self.ON = True
-
-    def auto(self):
+    def start_movement_thread(self):  # This should be inside the MainScreen Class
+        Thread(target=self.auto).start()
+    def auto(self):11
         print("Run the arm automatically here")
-
+        while True:
+            if self.run:
+                self.ON = False
+                self.toggleMagnet()
+                self.Position = "down"
+                self.toggleArm()
+                sleep(1)
+                s0.go_until_press(0, 4000)
+                while s0.isBusy():
+                    sleep(0.1)
+                s0.set_as_home()
+                s0.start_relative_move(2.3)
+                while s0.isBusy():
+                    sleep(0.1)
+                self.toggleArm()
+                self.toggleMagnet()
+                sleep(4)
+                self.toggleArm()
+                sleep(1)
+                s0.start_relative_move(.68)
+                sleep(1)
+                self.toggleArm()
+                sleep(2)
+                self.toggleMagnet()
+                self.toggleArm()
+                self.run = False
+                sleep(3)
+            else:
+                self.ON = True
+                self.toggleMagnet()
+                self.Position = "down"
+                self.toggleArm()
+                sleep(1)
+                self.ON = False
+                self.toggleMagnet()
+                sleep(1)
+                s0.go_until_press(0, 4000)
+                while s0.isBusy():
+                    sleep(0.1)
+                s0.set_as_home()
+                s0.start_relative_move(2.98)
+                while s0.isBusy():
+                    sleep(0.1)
+                self.toggleArm()
+                self.toggleMagnet()
+                sleep(1)
+                self.toggleArm()
+                sleep(1)
+                s0.start_relative_move(-.68)
+                self.run = True
+                while s0.isBusy():
+                    sleep(0.1)
+                self.toggleArm()
+                sleep(4)
+                self.toggleMagnet()
+                self.toggleArm()
+                sleep(3)
     def setArmPosition(self, position):
         print("Move arm here")
-        while s0.isBusy():
-            sleep(0.01)
         s0.go_to_position(position/25)
         self.armControlLabel.text = "Arm Position: " + str(position)
+        sleep(.01)
 
     def homeArm(self):
         arm.home(self.homeDirection)

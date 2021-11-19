@@ -132,7 +132,7 @@ class MainScreen(Screen):
             self.ON = True
     def start_movement_thread(self):  # This should be inside the MainScreen Class
         Thread(target=self.auto).start()
-    def auto(self):11
+    def auto(self):
         print("Run the arm automatically here")
         while True:
             if self.run:
